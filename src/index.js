@@ -8,6 +8,7 @@ import each from 'lodash/each'
 import assign from 'lodash/assign'
 import omit from 'lodash/omit'
 import keys from 'lodash/keys'
+import isEqual from 'lodash/isEqual'
 
 const noop = function() {}
 const events = [
@@ -41,6 +42,7 @@ export default class Timeline extends Component {
     super(props)
     this.state = {
       customTimes: [],
+      selected: [],
     }
   }
 
@@ -52,6 +54,10 @@ export default class Timeline extends Component {
     const { container } = this.refs
 
     this.$el = new vis.Timeline(container, undefined, this.props.options)
+
+    this.$el.on('select', ({ items }) => {
+      this.setState({ selected: items })
+    })
 
     events.forEach(event => {
       this.$el.on(event, this.props[`${event}Handler`])
@@ -67,18 +73,18 @@ export default class Timeline extends Component {
   shouldComponentUpdate(nextProps) {
     const { items, groups, options, selection, customTimes } = this.props
 
-    const itemsChange = items !== nextProps.items
-    const groupsChange = groups !== nextProps.groups
-    const optionsChange = options !== nextProps.options
-    const customTimesChange = customTimes !== nextProps.customTimes
-    const selectionChange = selection !== nextProps.selection
+    const itemsChange = !isEqual(items, nextProps.items)
+    const groupsChange = !isEqual(groups, nextProps.groups)
+    const optionsChange = !isEqual(options, nextProps.options)
+    const customTimesChange = !isEqual(customTimes, nextProps.customTimes)
+    const selectionChange = !isEqual(selection, nextProps.selection)
 
     return (
       itemsChange ||
       groupsChange ||
       optionsChange ||
       customTimesChange ||
-      selectionChange
+      (selectionChange && !isEqual(this.state.selected, nextProps.selection))
     )
   }
 
